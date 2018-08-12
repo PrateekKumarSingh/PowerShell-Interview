@@ -8,6 +8,15 @@ Document Resources, Topics, Questions and Tips for a PowerShell Development Inte
 ### PowerShell versions and differences
 ### Execution Policies
 ### CIM vs WMI
+
+|WMI|CIM|
+|--|--|
+|Stands for **Windows Management Instrumentation**| Stand for **Common Information Model**|
+|WMI is Microsoft's Implementation of CIM|-|
+|Since PowerShell v1|Introduced in **PowerShell v3**|
+||Uses WSMan and no more DCOM errors|
+
+### WinRM and WSMan and DCOM
 ### Automatic variables
 ### Parameter binding
     * By Value
@@ -33,8 +42,37 @@ Cast the input string to the [System.Net.IPAddress] class
 ### Advanced Functions
 ### CredSSP issues in PowerShell and workarounds
 ### PSRemoting
-    * How to enable?
-    * What is Implicit remoting
+
+#### How it works
+
+![](https://github.com/PrateekKumarSingh/PowerShell-Interview/blob/master/images/PSRemoting.png)
+
+#### How to enable PSRemoting on a server?
+
+[Server Side]        
+```PowerShell
+Enable-PSRemoting -Force
+
+# The asterisk is a wildcard symbol for all PCs. If instead you want to restrict computers that can connect, you can replace the asterisk with a comma-separated list of IP addresses or computer names for approved PCs.
+
+Set-Item wsman:\localhost\client\trustedhosts *
+        
+# After running that command, you’ll need to restart the WinRM service so your new settings take effect. Type the following cmdlet and then hit Enter:
+
+Restart-Service WinRM
+```
+
+[Client Side]
+```PowerShell
+Set-Item wsman:\localhost\client\trustedhosts *
+```
+Testing the 
+
+
+#### What is Implicit remoting
+TBD
+
+
 ### Try, Catch, Finally
 ### Errors
     * terminating, non-terminating errors
