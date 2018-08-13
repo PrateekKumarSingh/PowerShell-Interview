@@ -788,7 +788,11 @@ Function    Unregister-ScheduledJob       PSScheduledJob
 <hr>
 
 ## Try, Catch, Finally
-TBD
+
+
+<i>Credits:
+* https://kevinmarquette.github.io/2017-04-10-Powershell-exceptions-everything-you-ever-wanted-to-know/
+</i>
 
 <hr>
 
