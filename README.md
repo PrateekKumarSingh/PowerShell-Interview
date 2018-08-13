@@ -3,6 +3,49 @@ Document Resources, Topics, Questions and Tips for a PowerShell Development Inte
 
 Many of the topics/questions may not come directly in your interview, but it would be a good idea to understand them, in order to understand PowerShell better. Which will give you an edge in the interview and leave a better impression if you explain it in details.
 
+<hr>
+
+## Table of Contents
+* What is PowerShell?
+* How does powershell differ from other scripting languages
+* PowerShell versions and differences
+* Execution Policies
+* CIM vs WMI
+* WinRM and WSMan and DCOM
+* Automatic variables
+* What is Splatting
+* $Using variable
+* Require statement
+* Parameter binding
+* Powershell Pipelines
+* Powershell Scopes
+* Powershell Workflows
+* Powershell adaptive systems
+* Creating methods of an object
+* What has been most challenging work you have done.
+* Out-Host, Write-Output, Write-Host
+* Number of ways to create an object
+* How to rename a variable
+* Return vs write-output
+* Modules vs Snap-ins
+* What is a Filter?
+* How to reverse order of a String
+* How to save credentials in your PowerShell Scripts
+* How to take Passwords input from users in a secure way?
+* What is cryptographic algorithm used in ConvertTo-SecureString ?
+* Explain what is the function of $input variable?
+* What is $_ and $PSItem variable
+* What are two ways of extending PowerShell?
+* valid IP address as input
+* Advanced Functions
+* CredSSP issues in PowerShell and workarounds
+* PowerShell Remoting (PSRemoting)
+* Try, Catch, Finally
+* Errors
+* SOAP and REST API
+
+<hr>
+
 # Questions & Topics
 
 ## What is PowerShell?
@@ -70,6 +113,7 @@ Windows PowerShell determines the effective policy by evaluating the execution p
 |Windows only|Windows only|Any platform|
 |Get-WMIObject|**Get-CimInstance, Get-CimClass, Invoke-CimMethod**|No cmdlets|
 |More or less deprecated and you're **connected to LIVE objects and can play with them**| **Not connected** to LIVE objects, stateless relationship with the remote machine||
+|RPC port- **135**|WSMan Port - **5985**|WSMan Port - **5985**|
 
 ### Old WMI
 
@@ -167,14 +211,134 @@ Get-Help about_Automatic_Variables
 
 <hr>
 
+## What is Splatting
+
+Use a hash table to splat parameter name and value pairs. You can use this format for all parameter types, including positional and named parameters and switch parameters.
+
+```PowerShell
+$HashArguments = @{
+  Path = "test.txt"
+  Destination = "test2.txt"
+  WhatIf = $true
+}
+Copy-Item @HashArguments
+```
+
+<hr>
+
+## $Using variable
+
+For using Local variables in remote sessions
+
+```PowerShell
+$ps = "Windows PowerShell"
+Invoke-Command -ComputerName S1 -ScriptBlock {
+  Get-WinEvent -LogName $Using:ps
+}
+```
+
+<hr>
+
+
+## #Require statement
+
+* The #Requires statement **prevents a script from running unless specific conditions** the PowerShell version, modules, snap-ins, module and snap-in version, and edition prerequisites **are met**. 
+
+* If the prerequisites are not met, PowerShell does not run the script.
+
+```PowerShell
+#Requires -Version <N>[.<n>]
+#Requires -PSSnapin <PSSnapin-Name> [-Version <N>[.<n>]]
+#Requires -Modules { <Module-Name> | <Hashtable> }
+#Requires -PSEdition <PSEdition-Name>
+#Requires -ShellId <ShellId>
+```
+<hr>
+
 ## Parameter binding
-    * By Value
-    * By PropertyName
+
+### By Value
+
+```PowerShell
+Get-Service bits | Stop-Service
+```
+
+Data-Type/ TypeName of the object decides if it will bind to a function or cmdlet, If you look closely in the help file of the cmdlet, the InputObject accepts **ServiceController[]** objects from pipeline - **Accept pipeline input?       True (ByValue)**
+
+```PowerShell
+PS C:\> Get-Help Stop-Service -Parameter inputobject
+
+-InputObject <ServiceController[]>
+    Specifies ServiceController objects that represent the services to stop. Enter a variable that contains the objects, or type a command or expression that gets the objects.
+
+    Required?                    true
+    Position?                    0
+    Default value                None
+    Accept pipeline input?       True (ByValue)
+    Accept wildcard characters?  false
+```
+### By PropertyName
+
+```PowerShell
+$obj = [PSCustomObject]@{
+    Name = 'icmp'
+    Value = 'ping'
+}
+
+$obj | New-Alias -verbose
+```
+
+**Binds parameter on basis of names of the property** of the objects coming form the pipeline, you can check these properties like in the following example
+
+```PowerShell
+PS C:\> Get-Help New-Alias -Parameter Name
+
+-Name <String>
+    Specifies the new alias. You can use any alphanumeric characters in an alias, but the first character cannot be a number.
+
+    Required?                    true
+    Position?                    0
+    Default value                None
+    Accept pipeline input?       True (ByPropertyName)
+    Accept wildcard characters?  false
+
+PS C:\> Get-Help New-Alias -Parameter Value
+
+-Value <String>
+    Specifies the name of the cmdlet or command element that is being aliased.
+
+    Required?                    true
+    Position?                    1
+    Default value                None
+    Accept pipeline input?       True (ByPropertyName)
+    Accept wildcard characters?  false
+```
+
+### Parameter binding order
+
+1. ByValue with same Type (No Coercion)
+2. ByPropertyName with same Type (No Coercion)
+3. ByValue with type conversion (Coercion)
+4. ByPropertyName with type conversion (Coercion)
+
 <hr>
 
 ## Powershell Pipelines
 
-Pipeline processing
+* A pipeline is a series of commands connected by pipeline operators (|) or ASCII 124. 
+* Each pipeline operator sends the results of the preceding
+command to the next command.
+* A very **powerful
+command chain or "pipeline"** that is comprised of a series of simple commands.
+* Objects from previous cmdlet **binds parameters (ByValue/ByPropertyName)  to the cmdlet following the pipeline**
+* Pipeline processes **one object at a time**
+* Investing Pipeline errors, is mostly investigating what went wrong with the `Parameter Binding`
+
+```PowerShell
+Trace-Command -name ParameterBinding -expression {
+    Get-Service BITS | Stop-Service
+} -pshost
+```
 
 <i> Credits: 
 * https://www.red-gate.com/simple-talk/sysadmin/powershell/ins-and-outs-of-the-powershell-pipeline/
@@ -185,7 +349,25 @@ Pipeline processing
 ## Powershell Scopes
 
 * Global, Local, Script, Private
+
+### Global
+* The scope that is **in effect when PowerShell starts.** and is the **Default scope** 
+* Variables and functions that are present when PowerShell starts have been created in the global scope. This includes automatic variables and preference variables. 
+* This also **includes variables, aliases, and functions that are in your PowerShell profile.**
+
+### Local
+* The **current scope**. The local scope can be the global scope or any other scope.
+
+### Script	
+* The scope that is **created while a script file runs**. Only the commands in the script run in the script scope. To the commands in a script, the script scope is the local scope.
+
+### Private	
+* Items in private scope **cannot be seen outside of the current scope**. You can use private scope to create a private version of an item with the same name in another scope.
+
+<i>Credits:
 * https://ss64.com/ps/syntax-scopes.html
+
+</i>
 
 <hr>
 
@@ -244,7 +426,35 @@ $o = New-Object psobject -Property $properties; $o
 <hr>
 
 ## How to rename a variable
-TBD
+
+```PowerShell
+PS C:\> $a = 1..3
+PS C:\> $a
+1
+2
+3
+PS C:\> Rename-Item -Path variable:a -NewName b
+PS C:\> $b
+1
+2
+3
+```
+
+<hr>
+
+## How to find the largest file in a folder
+
+```PowerShell
+PS C:\> Get-ChildItem C:\Data\Powershell\PoshBot\ -recurse | Sort-Object Length -desc | Select-Object -f 1
+
+
+    Directory: C:\Data\Powershell\PoshBot\PoshBot\en-US
+
+
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+-a----        4/19/2018  12:37 AM          97648 PoshBot-help.xml
+```
 
 <hr>
     	
@@ -255,12 +465,45 @@ TBD
 <hr>
 
 ## Modules vs Snap-ins
-TBD
+
+|Modules|Snap-ins|
+|--|--|
+|A package that contains Windows PowerShell commands in form of functions, cmdlets etc.| Are compiled cmdlets in to a DLL written in a .Net language|
+|Can be imported directly|Requires Installation, with Admin privileges|
+|Extension: **.psm1**|Extension: **.dll**|
+|New|Deprecated|
+|Get-Module -ListAvailable|Get-PSSnapin -Registered|
+|Stored in **$env:PSModulePath**|Stored in registry: `hklm:\SOFTWARE\Microsoft\PowerShell\1\PowerShellSnapIns\`|
+|`Import-Module [name]`|`Add-PSSnapIn [name]` adds the PSSnapIn to the PowerShell Session|
 
 <hr>
 
 ## What is a Filter?
-TBD
+
+A filter is **a function that just has a process scriptblock**
+
+```PowerShell
+PS C:\> filter myFilter {
+         $_
+ }
+PS C:\> @(1,2,3) | myFilter
+1
+2
+3
+
+```
+
+Other ways to use filters
+
+```PowerShell
+function myFunction {
+    $Input
+}
+
+Function myFunction {
+    Process { $_ }
+}
+```
 
 <hr>
 
@@ -315,12 +558,17 @@ Read-Host -AsSecureString
 <hr>
 
 ## Explain what is the function of $input variable?
-TBD
 
+* Contains an enumerator that **enumerates all input that is passed to a function**. 
+* The $input variable is available only to functions and script blocks (which are unnamed functions).  
+* In the **Process block of a function, the $input variable enumerates the object that is currently in the pipeline**. 
+* When the Process block  completes, there are no objects left in the pipeline, so the $input variable enumerates an empty collection. 
+* If the function does not have a Process block, then in the End block, the $input variable enumerates the collection of all input to the function.
 <hr>
 
 ## What is $_ and $PSItem variable
-TBD
+
+Both represents the **Current object in pipeline**
 
 <hr>
 
@@ -337,12 +585,83 @@ TBD
 
 <hr>
 
-## Advanced Functions		
+## Advanced Functions
 
-* [cmdletbinding()]
-* Begin{} process{} end {} blocks 
+* Advanced functions uses **CmdletBinding attribute** to identify them as functions that act similar to cmdlets. 
+* Using the `[CmdletBinding()]` at the top includes the **common parameters** to the function : `Verbose, Debug, ErrorAction, ErrorVariable, WarningAction, WarningVariable, OutBuffer, PipelineVariable, and OutVariable`
+* WhatIf and Confirm functionalities can be added by using the **SupportsShouldProcess** in the cmdlet binding attribute `[CmdletBinding(SupportsShouldProcess = $true)]`
+* See `Get-Help about_Functions_CmdletBindingAttribute`
+* Advance functions have following script blocks:  `Begin{} Process{} End{}`
+* **If script blocks are not defined**, anything in body of Advance function is a `Process block` 
 
-https://ss64.com/ps/syntax-function-input.html
+```PowerShell
+function foo {
+[cmdletbinding()]
+    Param (
+        [parameter(ValueFromPipeline=$True)]
+        [string]$Name)
+ 
+    Begin {}
+    Process{
+            write-verbose $Name
+            }
+    End{}
+}
+```
+
+<i>Credits:
+* https://ss64.com/ps/syntax-function-input.html
+* https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_functions_advanced?view=powershell-6
+</i>
+
+<hr>
+
+## PowerShell Streams
+
+|Stream|Number|Contents|Usage|Comments|
+|--|--|--|--|--|
+|Output/Success/Pipeline|1|Output from commands|Write-Output "Write-Output message"|Default stream, all o/p goes to this stream even the end of pipeline|
+|Error|2|Error messages|Write-Verbose "Write-Verbose message"||
+|Warning|3|Warning messages|Write-Warning "Write-Warning message"||
+|Verbose|4|Verbose output|Write-Debug "Write-Debug message"||
+|Debug|5|Debug messages|Write-Error "Write-Error message"||
+|Information|6|General information|Write-Information "Write-Information"| Since PowerShell v5|
+
+![](https://github.com/PrateekKumarSingh/PowerShell-Interview/blob/master/images/OutputStreams.png)
+
+### Stream Redirection
+
+```
+1-6 : Choice of PowerShell Streams
+>   : Redirection operator
+>>  : Redirect and append
+&   : Adding PowerShell Streams
+*   : All Streams
+```
+Examples -
+
+```
+3>&1    - Sends warnings (3) and Success output (1) stream
+4>&1    - Sends verbose output (4) and success output (1)
+*>&1    - Sends all output streams to Output Stream (1)
+```
+
+<i>Credits:
+* https://blogs.technet.microsoft.com/heyscriptingguy/2014/03/30/understanding-streams-redirection-and-write-host-in-powershell/
+</i>
+
+<hr>
+
+## Out* cmdlets
+
+|Cmdlet|Functionality|
+|--|--|
+|Out-Host|is the default when you don’t specify anything else|
+|Out-Default|In reality, the Out-Host portion of that is unnecessary, because Windows PowerShell has the Out-Default cmdlet hardcoded into the end of the pipeline. That cmdlet simply forwards things to Out-Host|
+|Out-Printer|sends output to a printer.|
+|Out-File|sends output to a file|
+|Out-Grid|Displays your objects in a graphical table with click-to-sort column headers and a search/filter box to help locate specific results|
+|Write-Output|Sends output to the pipeline|
 
 <hr>
 
@@ -353,7 +672,6 @@ https://ss64.com/ps/syntax-function-input.html
 PowerShell remoting to connect to Server-1 which then attempts to connect from Server-1 to Server-2 but the second connection fails, this is a Double Hop issue.
 
 Because, PSRemoting authenticates via **Network Logon** which works by showing possession of the credential, but since remote server doesn’t have the credential, it fails! the second Hop Server-1 to Server-2.
-
 
 
 ### Workaround
