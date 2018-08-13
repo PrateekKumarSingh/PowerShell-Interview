@@ -173,6 +173,40 @@ Get-Help about_Automatic_Variables
 <hr>
 
 ## Powershell Pipelines
+
+Pipeline processing
+
+<i> Credits: 
+* https://www.red-gate.com/simple-talk/sysadmin/powershell/ins-and-outs-of-the-powershell-pipeline/
+* https://www.red-gate.com/simple-talk/dotnet/.net-tools/down-the-rabbit-hole--a-study-in-powershell-pipelines,-functions,-and-parameters/ </i>
+
+<hr>
+
+## Powershell Scopes
+
+* Global, Local, Script, Private
+* https://ss64.com/ps/syntax-scopes.html
+
+<hr>
+
+## Powershell Workflows
+
+* https://blogs.technet.microsoft.com/heyscriptingguy/2012/12/26/powershell-workflows-the-basics/
+
+<hr>
+
+
+## Powershell adaptive systems
+TBD
+
+<hr>
+
+## Creating methods of an object
+TBD
+
+<hr>
+
+## What has been most challenging work you have done. 
 TBD
 
 <hr>
@@ -182,12 +216,101 @@ TBD
 
 <hr>
 
-## Num. of ways to create an object
-TBD
+## Number of ways to create an object
+
+```PowerShell
+# 1. Using Hashtables
+[pscustomobject]@{
+    firstname = 'Prateek'
+    lastname =  'Singh'
+}
+
+# 2. Using Select-Object
+Select-Object @{n='firstname';e={'Prateek'}},@{n='lastname';e={'Singh'}} -InputObject ''
+
+# 3. Using New-Object and Add-memeber
+$obj = New-Object -TypeName psobject
+$obj | Add-Member -MemberType NoteProperty -Name firstname -Value 'Prateek'
+$obj | Add-Member -MemberType NoteProperty -Name lastname -Value 'Singh'
+
+# 4. Using New-Object and hashtables
+$properties = @{
+    firstname = 'Prateek'
+    lastname = 'Singh'
+}		
+$o = New-Object psobject -Property $properties; $o
+```
+
 <hr>
 
 ## How to rename a variable
 TBD
+
+<hr>
+    	
+## Return vs write-output
+TBD
+
+
+<hr>
+
+## Modules vs Snap-ins
+TBD
+
+<hr>
+
+## What is a Filter?
+TBD
+
+<hr>
+
+## How to reverse order of a String
+
+```PowerShell
+# Method 1
+$a='String'.tochararray();  [array]::Reverse($a)
+
+# Method 2
+$a = '';for($i=$($Str.Length-1);$i -ge 0;$i--){$a+=$Str[$i]} ; $a
+
+# Method 3
+$str[$($str.Length-1)..0] -join ''
+```
+
+<hr>
+
+## How to save credentials in your PowerShell Scripts
+
+* The use ConvertTo-SecureString and ConvertFrom-SecureString **without a Key or SecureKey, Powershell will use Windows Data Protection API (DPAPI) to encrypt/decrypt** your strings. 
+
+* This means that it will **only work for the same user on the same computer**.
+
+* Using **a Key/SecureKey, the AES encryption algorithm** is used that allows you to use the stored credential from any machine with any user so long as you know the AES Key that was used.
+
+```PowerShell
+$user = "UserName"
+$password = 'Password@123'| ConvertTo-SecureString -AsPlainText -Force | ConvertFrom-SecureString
+$Creds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $User, ($password | ConvertTo-SecureString)
+```
+
+<hr>
+
+## How to take Passwords input from users in a secure way?
+
+```PowerShell
+Read-Host -AsSecureString
+```
+
+<hr>
+
+## 	What is cryptographic algorithm used in ConvertTo-SecureString ?
+1. AES  - Advanced Encryption Standard 
+2. DPAPI - WIndows **Data Protection API** is used to encrypt your strings
+
+<i> Credits: 
+* https://powershell.org/2014/02/01/revisited-powershell-and-encryption
+* https://powershell.org/2013/11/24/saving-passwords-and-preventing-other-processes-from-decrypting-them/#.W3FsA-gzaUk
+ </i>
 
 <hr>
 
@@ -209,20 +332,67 @@ TBD
 ## You have a script which uses Read-Host to prompt the user for an IP address. You need to make sure the user inputs a valid IP address. How would you do that ?
 
 1. Splitting the address in 4 elements and try to cast them to a [byte]
-
 2. A regular expression [regex]
-
 3. Cast the input string to the [System.Net.IPAddress] class
 
 <hr>
 
-## Advanced Functions
-TBD
+## Advanced Functions		
+
+* [cmdletbinding()]
+* Begin{} process{} end {} blocks 
+
+https://ss64.com/ps/syntax-function-input.html
 
 <hr>
 
 ## CredSSP issues in PowerShell and workarounds
-TBD
+
+### Double Hop Issue
+
+PowerShell remoting to connect to Server-1 which then attempts to connect from Server-1 to Server-2 but the second connection fails, this is a Double Hop issue.
+
+Because, PSRemoting authenticates via **Network Logon** which works by showing possession of the credential, but since remote server doesn’t have the credential, it fails! the second Hop Server-1 to Server-2.
+
+
+
+### Workaround
+
+* PowerShell provides the CredSSP option which performs **“Network Clear-text Logon”** instead of a **“Network Logon”**. 
+* CredSSP Network Clear-text Logon sends clear-text password to the remote Server-1 in clear-text, which eventually is used to authenticate to Server-2, in the second hop. 
+
+```PowerShell
+# On client machine, from where you do the PowerShell Remoting
+Enable-WSManCredSSP –Role Client –DelegateComputer Server2.ridicurious.com -Force
+
+# Checking
+Get-WSManCredSSP
+
+# On Server
+Enable-WSManCredSSP –Role Server -Force
+
+# Usage - Make sure to use CredSSP Authentication
+Enter-PSSession –ComputerName Server2.ridicurious.com –Credential RidiCurious\administrator –Authentication CredSSP
+```
+
+### CAUTION
+
+* This is not constrained delegation. CredSSP passes the user's full credentials to the server without any constraint.
+* And if the Server is compromised, attackers can even read your credentials in plain-text using tools like **Mimikatz**
+
+### What is CredSSP
+
+* The **Credential Security Support Provider protocol** (CredSSP) is a Security Support Provider that is implemented by using the Security Support Provider Interface (SSPI)
+* CredSSP lets an **application delegate the user's credentials from the client to the target server** for remote authentication. 
+* CredSSP provides an encrypted **Transport Layer Security Protocol channel** (TLS). The client is authenticated over the encrypted channel by using the Simple and Protected Negotiate (SPNEGO) protocol with either Microsoft Kerberos or Microsoft NTLM.
+
+
+![](https://github.com/PrateekKumarSingh/PowerShell-Interview/blob/master/images/DoubleHop_CredSSP.png)
+
+<i> Credits
+* https://docs.microsoft.com/en-us/windows/desktop/secauthn/credential-security-support-provider
+* https://www.powershellmagazine.com/2014/03/06/accidental-sabotage-beware-of-credssp/
+</i> 
 
 <hr>
 
@@ -299,7 +469,7 @@ Permission    : NT AUTHORITY\INTERACTIVE AccessAllowed, BUILTIN\Administrators A
 * If you need to access methods or change properties, or in other words if you must **work with the live objects**, simply make sure you do so **on the remote side**, before the objects get serialized and travel back to the caller
 
 
-### What is Implicit remoting
+### What is Implicit remoting?
 
 ![](https://github.com/PrateekKumarSingh/PowerShell-Interview/blob/master/images/ImplcitRemoting.png)
 
