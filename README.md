@@ -330,10 +330,25 @@ Trace-Command -name ParameterBinding -expression {
 
 ## Powershell Workflows
 
+1. Persist
+2. Parallelism
+    * Parallel
+    * Foreach -Parallel
+3. Sequence
+4. InlineScript
+
+
+
 * https://blogs.technet.microsoft.com/heyscriptingguy/2012/12/26/powershell-workflows-the-basics/
 
 <hr>
 
+## How to write PowerShell scripts that can withstand reboots or Interruptions?
+
+* WorkFlows
+* RunOnce Registry key
+
+<hr>
 
 ## Powershell adaptive systems
 
