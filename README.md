@@ -336,7 +336,12 @@ Trace-Command -name ParameterBinding -expression {
 
 
 ## Powershell adaptive systems
-TBD
+
+PowerShell does not have support for creating types directly, but instead favors monkey patching using PowerShell’s Adaptive Type System (ATS) to add variables, properties, methods, and ScriptBlocks to a PSObject instance.
+
+* Add-Member 
+* With ATS you are in control of your own destiny.  (If you don’t like the world – change it yourself. [then share to help others]) ~JSnover
+
 
 <hr>
 
