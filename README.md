@@ -3,49 +3,6 @@ Document Resources, Topics, Questions and Tips for a PowerShell Development Inte
 
 Many of the topics/questions may not come directly in your interview, but it would be a good idea to understand them, in order to understand PowerShell better. Which will give you an edge in the interview and leave a better impression if you explain it in details.
 
-<hr>
-
-## Table of Contents
-* What is PowerShell?
-* How does powershell differ from other scripting languages
-* PowerShell versions and differences
-* Execution Policies
-* CIM vs WMI
-* WinRM and WSMan and DCOM
-* Automatic variables
-* What is Splatting
-* $Using variable
-* Require statement
-* Parameter binding
-* Powershell Pipelines
-* Powershell Scopes
-* Powershell Workflows
-* Powershell adaptive systems
-* Creating methods of an object
-* What has been most challenging work you have done.
-* Out-Host, Write-Output, Write-Host
-* Number of ways to create an object
-* How to rename a variable
-* Return vs write-output
-* Modules vs Snap-ins
-* What is a Filter?
-* How to reverse order of a String
-* How to save credentials in your PowerShell Scripts
-* How to take Passwords input from users in a secure way?
-* What is cryptographic algorithm used in ConvertTo-SecureString ?
-* Explain what is the function of $input variable?
-* What is $_ and $PSItem variable
-* What are two ways of extending PowerShell?
-* valid IP address as input
-* Advanced Functions
-* CredSSP issues in PowerShell and workarounds
-* PowerShell Remoting (PSRemoting)
-* Try, Catch, Finally
-* Errors
-* SOAP and REST API
-
-<hr>
-
 # Questions & Topics
 
 ## What is PowerShell?
@@ -113,7 +70,7 @@ Windows PowerShell determines the effective policy by evaluating the execution p
 |Windows only|Windows only|Any platform|
 |Get-WMIObject|**Get-CimInstance, Get-CimClass, Invoke-CimMethod**|No cmdlets|
 |More or less deprecated and you're **connected to LIVE objects and can play with them**| **Not connected** to LIVE objects, stateless relationship with the remote machine||
-|RPC port- **135**|WSMan Port - **5985**|WSMan Port - **5985**|
+|RPC port- **135**|WSMan Port - **5985 (HTTP), 5986(HTTPS)**|WSMan Port - **5985 (HTTP), 5986(HTTPS)**|
 
 ### Old WMI
 
