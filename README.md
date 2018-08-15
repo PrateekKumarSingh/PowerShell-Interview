@@ -248,7 +248,19 @@ $env:PROCESSOR_ARCHITECTURE
 [Environment]::Is64BitOperatingSystem
 
 # method 3
-Get-WMIObject -class win32_computersystem| % Systemtype
+gwmi win32_operatingsystem | select osarchitecture
+
+# method 4
+(wmic os get osarchitecture)[2]
+```
+
+<hr>
+
+## How to find operating system name/version
+
+```PowerShell
+ (Get-WmiObject Win32_OperatingSystem).Name
+ (Get-WmiObject Win32_OperatingSystem).caption
 ```
 <hr>
 
