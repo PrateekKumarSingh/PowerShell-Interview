@@ -196,6 +196,66 @@ Invoke-Command -ComputerName S1 -ScriptBlock {
 
 <hr>
 
+## How to map network drives using PowerShell and it should persist
+
+* Using `WScript.Network` COM object
+
+    ```PowerShell
+    $Net = $(New-Object -ComObject Wscript.Network )
+    $Net.MapNetworkDrive( "S:", '\\localhost\filemov',$true )
+    ```
+* Using `net` command from Native CMD
+
+    `net use M: \\Server\Share /Persistent:Yes`
+
+* Using `PSDrive`
+
+    ```PowerShell
+    New-PSDrive -Persist -Name "y" -PSProvider "FileSystem" -Root   "\\localhost\filemov"
+    ```
+<hr>
+
+## How to form credentials objects in PowerShell
+
+```PowerShell
+$UserName = 'Prateek'
+$Password = 'Password@123' | ConvertTo-SecureString -AsPlainText -Force
+
+# method 1
+[pscredential]::new($Username,$Password)
+
+# method 2
+New-Object System.Management.Automation.PSCredential($UserName,$Password)
+```
+
+<hr>
+
+## How to find installed applications on a windows machine
+
+```PowerShell
+Get-WmiObject -Class Win32_Product | Format-wide -column 1
+```
+
+<hr>
+
+## How to identify if a windows machine is 32/64 bit
+
+```PowerShell
+# method 1
+$env:PROCESSOR_ARCHITECTURE
+
+# method 2
+[Environment]::Is64BitOperatingSystem
+
+# method 3
+Get-WMIObject -class win32_computersystem| % Systemtype
+```
+<hr>
+
+## What is String Interpolation in PowerShell
+
+<hr>
+
 
 ## #Require statement
 
@@ -343,10 +403,80 @@ Trace-Command -name ParameterBinding -expression {
 
 <hr>
 
+## How to extend a disk partition using PowerShell
+
+```PowerShell
+$part = Get-Partition |? {$_.isboot}
+$size = Get-PartitionSupportedSize -DriveLetter $part.DriveLetter
+Resize-Partition -DriveLetter $part.DriveLetter -Size $size.SizeMax -Verbose
+```
+
+<hr>
+
 ## How to write PowerShell scripts that can withstand reboots or Interruptions?
 
 * WorkFlows
 * RunOnce Registry key
+
+<hr>
+
+## How to find free space on a drive using PowerShell
+
+```Powershell
+PS C:\> Get-PSDrive
+
+Name           Used (GB)     Free (GB) Provider      Root
+----           ---------     --------- --------      ----
+Alias                                  Alias
+C                 294.11        623.80 FileSystem    C:\
+Cert                                   Certificate   \
+D                                      FileSystem    D:\
+Env                                    Environment
+Function                               Function
+HKCU                                   Registry      HKEY_CURRENT_USER
+HKLM                                   Registry      HKEY_LOCAL_MACHINE
+Variable                               Variable
+WSMan                                  WSMan
+
+
+PS C:\> gwmi win32_logicaldisk
+
+
+DeviceID     : C:
+DriveType    : 3
+ProviderName :
+FreeSpace    : 669797478400
+Size         : 985600299008
+VolumeName   : OS
+
+DeviceID     : D:
+DriveType    : 5
+ProviderName :
+FreeSpace    :
+Size         :
+VolumeName   :
+
+
+
+PS C:\> Get-CimInstance cim_logicaldisk
+
+DeviceID DriveType ProviderName VolumeName Size         FreeSpace
+-------- --------- ------------ ---------- ----         ---------
+C:       3                      OS         985600299008 669796954112
+D:       5
+
+
+PS C:\> Get-Volume
+
+DriveLetter FriendlyName FileSystemType DriveType HealthStatus OperationalStatus SizeRemaining      Size
+----------- ------------ -------------- --------- ------------ ----------------- -------------      ----
+C           OS           NTFS           Fixed     Healthy      OK                     623.8 GB 917.91 GB
+            Image        NTFS           Fixed     Healthy      OK                    554.41 MB  11.07 GB
+                         NTFS           Fixed     Healthy      OK                    334.54 MB    865 MB
+            DELLSUPPORT  NTFS           Fixed     Healthy      OK                    539.16 MB   1.07 GB
+            ESP          FAT32          Fixed     Healthy      OK                    433.32 MB    496 MB
+D                        Unknown        CD-ROM    Healthy      Unknown                     0 B       0 B
+```
 
 <hr>
 
@@ -840,5 +970,130 @@ Function    Unregister-ScheduledJob       PSScheduledJob
 |SOAP requires more bandwidth for its usage. Since SOAP Messages contain a lot of information inside of it, the amount of data transfer using SOAP is generally a lot.|REST does not need much bandwidth when requests are sent to the server. REST messages mostly just consist of JSON messages. Below is an example of a JSON message passed to a web server. You can see that the size of the message is comparatively smaller to SOAP. **{"city":"Mumbai","state":"Maharastra"}**|
 |Tranfer on HTTP, FTP and SMTP etc| Only HTTP|
 
+<hr>
 
+## What is DSC
 
+There are two types of architecture with DSC:
+
+### Push mode
+The configurations are sent/pushed manually towards one or more units that we call “node”. This action is done by an administrator.
+
+### Pull mode
+A "Pull Server" is created and the nodes contact this server at regular intervals so as to obtain their configuration.
+
+### DSC Resources
+
+Items allowed to configure on the nodes, is called a DSC Resources. Run `Get-DSCResource` cmdlet to list all the DSC resources
+
+```
+PS C:\> Get-DscResource | select Name,Module,Properties | Ft -AutoSize
+
+Name                      Module                      Properties
+----                      ------                      ----------
+File                                                  {DestinationPath, Attributes, Checksum, Contents...}
+SignatureValidation                                   {SignedItemType, TrustedStorePath}
+PackageManagement         PackageManagement           {Name, AdditionalParameters, DependsOn, Ensure...}
+PackageManagementSource   PackageManagement           {Name, ProviderName, SourceUri, DependsOn...}
+Archive                   PSDesiredStateConfiguration {Destination, Path, Checksum, Credential...}
+Environment               PSDesiredStateConfiguration {Name, DependsOn, Ensure, Path...}
+Group                     PSDesiredStateConfiguration {GroupName, Credential, DependsOn, Description...}
+GroupSet                  PSDesiredStateConfiguration {DependsOn, PsDscRunAsCredential, GroupName, Ensure...}
+Log                       PSDesiredStateConfiguration {Message, DependsOn, PsDscRunAsCredential}
+Package                   PSDesiredStateConfiguration {Name, Path, ProductId, Arguments...}
+ProcessSet                PSDesiredStateConfiguration {DependsOn, PsDscRunAsCredential, Path, Credential...}
+Registry                  PSDesiredStateConfiguration {Key, ValueName, DependsOn, Ensure...}
+Script                    PSDesiredStateConfiguration {GetScript, SetScript, TestScript, Credential...}
+Service                   PSDesiredStateConfiguration {Name, BuiltInAccount, Credential, Dependencies...}
+ServiceSet                PSDesiredStateConfiguration {DependsOn, PsDscRunAsCredential, Name, StartupType...}
+User                      PSDesiredStateConfiguration {UserName, DependsOn, Description, Disabled...}
+WaitForAll                PSDesiredStateConfiguration {NodeName, ResourceName, DependsOn, PsDscRunAsCredential...}
+WaitForAny                PSDesiredStateConfiguration {NodeName, ResourceName, DependsOn, PsDscRunAsCredential...}
+WaitForSome               PSDesiredStateConfiguration {NodeCount, NodeName, ResourceName, DependsOn...}
+WindowsFeature            PSDesiredStateConfiguration {Name, Credential, DependsOn, Ensure...}
+WindowsFeatureSet         PSDesiredStateConfiguration {DependsOn, PsDscRunAsCredential, Name, Ensure...}
+WindowsOptionalFeature    PSDesiredStateConfiguration {Name, DependsOn, Ensure, LogLevel...}
+WindowsOptionalFeatureSet PSDesiredStateConfiguration {DependsOn, PsDscRunAsCredential, Name, Ensure...}
+WindowsPackageCab         PSDesiredStateConfiguration {Ensure, Name, SourcePath, DependsOn...}
+WindowsProcess            PSDesiredStateConfiguration {Arguments, Path, Credential, DependsOn...}
+
+```
+
+### Syntax
+
+DSC syntax contains 3 basic components -
+
+1. Configuration
+2. Node - Name of server/machine
+3. Resource (DSC Resource)
+
+To view the DSC Configuraiton use the cmdlet: `Get-DscResource <Name of Resource> -Syntax`
+
+![](https://github.com/PrateekKumarSingh/PowerShell-Interview/blob/master/images/Get-DSCResource.jpeg)
+
+## Writing a simple Configuration
+
+```PowerShell
+Configuration FileCopy # Name of the configuration
+{  
+    param( # Configuration parameters
+    	[Parameter(Mandatory=$true)] 
+    	[String[]]$Servers, 
+    	[Parameter(Mandatory=$true)] 
+    	[String]$SourceFile, 
+    	[Parameter(Mandatory=$true)] 
+    	[String]$DestinationFile
+    )
+
+    Node $Servers # Node deploys the configuration on machine(s)
+    {  
+	    File 'CopyHostFile'
+        {    
+	        Ensure = "Present" 
+	        SourcePath = $SourceFile
+	        DestinationPath = $DestinationFile
+	    }
+        
+        Service 'StartService'
+        {
+            Name        = "Bits"
+            StartupType = "Manual"
+            State       = "Running"
+        }
+    }
+}   
+```
+
+## Applying DSC configuration
+
+Following command will generate a MOF file, with name of the node, like `localhost.mof`
+
+```PowerShell
+FileCopy -Servers localhost -SourceFile C:\test\out.txt -DestinationFile C:\test\filemov -OutputPath C:\test\mof -Verbose
+```
+
+Push the configuration using the `.mof` file
+
+```
+Start-DscConfiguration C:\test\mof\ -Verbose -wait
+``` 
+
+## Checking past DSC Configuration
+
+```PowerShell
+PS C:\> Get-DscConfigurationStatus
+
+Status     StartDate                 Type            Mode  RebootRequested      NumberOfResources
+------     ---------                 ----            ----  ---------------      -----------------
+Success    8/15/2018 7:58:41 PM      Initial         PUSH  False                2
+```
+
+## Testing DSC Resource configuration with the MOF Files
+
+```PowerShell
+PS C:\> Test-DscConfiguration -Path C:\test\mof\
+
+PSComputerName  ResourcesInDesiredState        ResourcesNotInDesiredState     InDesiredState
+--------------  -----------------------        --------------------------     --------------
+localhost                                      {[File]CopyHostFile::[FileC... False
+```
