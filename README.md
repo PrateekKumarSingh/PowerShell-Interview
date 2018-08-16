@@ -1041,7 +1041,7 @@ DSC syntax contains 3 basic components -
 
 To view the DSC Configuraiton use the cmdlet: `Get-DscResource <Name of Resource> -Syntax`
 
-![](https://github.com/PrateekKumarSingh/PowerShell-Interview/blob/master/images/Get-DSCResource.jpeg)
+![](https://github.com/PrateekKumarSingh/PowerShell-Interview/blob/master/images/Get-DSCResource.jpg)
 
 ## Writing a simple Configuration
 
