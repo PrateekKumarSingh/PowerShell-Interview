@@ -233,7 +233,7 @@ New-Object System.Management.Automation.PSCredential($UserName,$Password)
 ## How to find installed applications on a windows machine
 
 ```PowerShell
-Get-WmiObject -Class Win32_Product | Format-wide -column 1
+Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* |  Select-Object DisplayName, DisplayVersion, Publisher, InstallDate
 ```
 
 <hr>
